@@ -1,6 +1,6 @@
-import { useRef, useMemo, useCallback } from 'react'
+import { useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import { useGesture } from '@use-gesture/react'
-import { parseISO } from 'date-fns'
+import { parseISO, differenceInDays } from 'date-fns'
 import { useUIStore } from '@/stores/uiStore'
 import {
   getAxisTicks,
@@ -16,7 +16,10 @@ const ROW_GAP = 6
 const HEADER_HEIGHT = 40
 const HEATBAND_HEIGHT = 24
 const FAMILY_SECTION_GAP = 16
-const FAMILY_LABEL_WIDTH = 90
+const SCROLLBAR_HEIGHT = 14
+const SCROLLBAR_TRACK_HEIGHT = 8
+const MIN_THUMB_WIDTH = 40
+const CONTENT_PADDING_DAYS = 365 // 1 year padding on each side
 
 interface TimelineCanvasProps {
   phases: Phase[]
@@ -35,6 +38,7 @@ export function TimelineCanvas({
 }: TimelineCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
 
   const viewport = useUIStore((s) => s.viewport)
   const setViewport = useUIStore((s) => s.setViewport)
@@ -42,6 +46,9 @@ export function TimelineCanvas({
   const selectedPhaseId = useUIStore((s) => s.selectedPhaseId)
   const selectPhase = useUIStore((s) => s.selectPhase)
   const darkMode = useUIStore((s) => s.darkMode)
+
+  const [draggingThumb, setDraggingThumb] = useState(false)
+  const dragStartRef = useRef({ mouseX: 0, offsetX: 0 })
 
   const containerWidth = containerRef.current?.clientWidth ?? 1200
 
@@ -65,6 +72,49 @@ export function TimelineCanvas({
     [originDate, viewport, containerWidth],
   )
 
+  // Compute total content extent in pixels (across all phases)
+  const contentExtent = useMemo(() => {
+    if (phases.length === 0) {
+      // Default: show ~10 years from origin
+      const defaultSpan = 3650 * viewport.pixelsPerDay
+      return { minPx: -CONTENT_PADDING_DAYS * viewport.pixelsPerDay, maxPx: defaultSpan, totalPx: defaultSpan + 2 * CONTENT_PADDING_DAYS * viewport.pixelsPerDay }
+    }
+
+    let minDay = Infinity
+    let maxDay = -Infinity
+    for (const phase of phases) {
+      const startDays = differenceInDays(parseISO(phase.startDate), originDate)
+      const endDays = differenceInDays(parseISO(phase.endDate), originDate)
+      if (startDays < minDay) minDay = startDays
+      if (endDays > maxDay) maxDay = endDays
+    }
+
+    const minPx = (minDay - CONTENT_PADDING_DAYS) * viewport.pixelsPerDay
+    const maxPx = (maxDay + CONTENT_PADDING_DAYS) * viewport.pixelsPerDay
+    return { minPx, maxPx, totalPx: maxPx - minPx }
+  }, [phases, originDate, viewport.pixelsPerDay])
+
+  // Scrollbar geometry
+  const scrollbar = useMemo(() => {
+    const { minPx, totalPx } = contentExtent
+    if (totalPx <= 0 || totalPx <= containerWidth) {
+      return { visible: false, thumbWidth: 0, thumbLeft: 0 }
+    }
+
+    const ratio = containerWidth / totalPx
+    const thumbWidth = Math.max(ratio * containerWidth, MIN_THUMB_WIDTH)
+    const scrollableTrack = containerWidth - thumbWidth
+    // offsetX = 0 means origin is at left edge. We need to map offsetX to thumb position.
+    // viewLeft in content coords = -offsetX
+    // progress = (viewLeft - minPx) / (totalPx - containerWidth)
+    const viewLeft = -viewport.offsetX
+    const maxScroll = totalPx - containerWidth
+    const progress = Math.max(0, Math.min(1, (viewLeft - minPx) / maxScroll))
+    const thumbLeft = progress * scrollableTrack
+
+    return { visible: true, thumbWidth, thumbLeft }
+  }, [contentExtent, containerWidth, viewport.offsetX])
+
   const categoryRowCount = layoutResult.categoryRowCount || 1
   const familyLaneCount = layoutResult.familyLanes.length
 
@@ -82,6 +132,68 @@ export function TimelineCanvas({
     [selectPhase, onPhaseClick],
   )
 
+  // Convert a track click/drag position to an offsetX
+  const trackPositionToOffsetX = useCallback(
+    (clientX: number) => {
+      const trackEl = trackRef.current
+      if (!trackEl) return viewport.offsetX
+      const rect = trackEl.getBoundingClientRect()
+      const { minPx, totalPx } = contentExtent
+      const maxScroll = totalPx - containerWidth
+      if (maxScroll <= 0) return 0
+
+      const thumbWidth = Math.max((containerWidth / totalPx) * containerWidth, MIN_THUMB_WIDTH)
+      const scrollableTrack = containerWidth - thumbWidth
+      // Center the thumb on the click point
+      const clickX = clientX - rect.left - thumbWidth / 2
+      const progress = Math.max(0, Math.min(1, clickX / scrollableTrack))
+      return -(minPx + progress * maxScroll)
+    },
+    [contentExtent, containerWidth, viewport.offsetX],
+  )
+
+  const handleTrackClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only jump if clicking the track, not the thumb
+      if ((e.target as HTMLElement).dataset.scrollThumb) return
+      setViewport({ offsetX: trackPositionToOffsetX(e.clientX) })
+    },
+    [trackPositionToOffsetX, setViewport],
+  )
+
+  const handleThumbPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setDraggingThumb(true)
+      dragStartRef.current = { mouseX: e.clientX, offsetX: viewport.offsetX }
+      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    },
+    [viewport.offsetX],
+  )
+
+  const handleThumbPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!draggingThumb) return
+      const { minPx, totalPx } = contentExtent
+      const maxScroll = totalPx - containerWidth
+      if (maxScroll <= 0) return
+
+      const thumbWidth = Math.max((containerWidth / totalPx) * containerWidth, MIN_THUMB_WIDTH)
+      const scrollableTrack = containerWidth - thumbWidth
+      const deltaMousePx = e.clientX - dragStartRef.current.mouseX
+      // Convert mouse delta to content delta
+      const deltaContent = (deltaMousePx / scrollableTrack) * maxScroll
+      const newOffsetX = dragStartRef.current.offsetX - deltaContent
+      setViewport({ offsetX: newOffsetX })
+    },
+    [draggingThumb, contentExtent, containerWidth, setViewport],
+  )
+
+  const handleThumbPointerUp = useCallback(() => {
+    setDraggingThumb(false)
+  }, [])
+
   useGesture(
     {
       onDrag: ({ delta: [dx] }) => {
@@ -90,12 +202,10 @@ export function TimelineCanvas({
       onWheel: ({ delta: [, dy], event }) => {
         event.preventDefault()
         if (event.ctrlKey || event.metaKey) {
-          // Zoom
           const factor = dy > 0 ? 0.9 : 1.1
           const newPpd = clampPixelsPerDay(viewport.pixelsPerDay * factor)
           setPixelsPerDay(newPpd)
         } else {
-          // Pan
           setViewport({ offsetX: viewport.offsetX - dy })
         }
       },
@@ -323,6 +433,56 @@ export function TimelineCanvas({
           </g>
         )}
       </svg>
+
+      {/* Horizontal scrollbar */}
+      {scrollbar.visible && (
+        <div
+          ref={trackRef}
+          onClick={handleTrackClick}
+          style={{
+            position: 'relative',
+            height: SCROLLBAR_HEIGHT,
+            marginTop: 2,
+            cursor: 'pointer',
+          }}
+        >
+          {/* Track */}
+          <div
+            style={{
+              position: 'absolute',
+              top: (SCROLLBAR_HEIGHT - SCROLLBAR_TRACK_HEIGHT) / 2,
+              left: 0,
+              right: 0,
+              height: SCROLLBAR_TRACK_HEIGHT,
+              borderRadius: SCROLLBAR_TRACK_HEIGHT / 2,
+              backgroundColor: 'hsl(var(--muted))',
+            }}
+          />
+          {/* Thumb */}
+          <div
+            data-scroll-thumb="true"
+            onPointerDown={handleThumbPointerDown}
+            onPointerMove={handleThumbPointerMove}
+            onPointerUp={handleThumbPointerUp}
+            onPointerCancel={handleThumbPointerUp}
+            style={{
+              position: 'absolute',
+              top: (SCROLLBAR_HEIGHT - SCROLLBAR_TRACK_HEIGHT) / 2,
+              left: scrollbar.thumbLeft,
+              width: scrollbar.thumbWidth,
+              height: SCROLLBAR_TRACK_HEIGHT,
+              borderRadius: SCROLLBAR_TRACK_HEIGHT / 2,
+              backgroundColor: draggingThumb
+                ? 'hsl(var(--foreground))'
+                : 'hsl(var(--muted-foreground))',
+              opacity: draggingThumb ? 0.7 : 0.5,
+              cursor: 'grab',
+              touchAction: 'none',
+              transition: draggingThumb ? 'none' : 'opacity 0.15s',
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
