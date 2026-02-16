@@ -22,11 +22,11 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 }
 
 const RELATIONSHIP_COLORS: Record<string, string> = {
-  parent: 'bg-blue-100 text-blue-800',
-  'parent-in-law': 'bg-indigo-100 text-indigo-800',
-  spouse: 'bg-pink-100 text-pink-800',
-  child: 'bg-green-100 text-green-800',
-  sibling: 'bg-amber-100 text-amber-800',
+  parent: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  'parent-in-law': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  spouse: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+  child: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  sibling: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
 }
 
 export function FamilyMemberList({ members, scenarioId, onEdit, onDelete }: FamilyMemberListProps) {

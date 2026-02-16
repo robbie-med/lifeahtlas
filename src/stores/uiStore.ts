@@ -18,6 +18,7 @@ interface UIState {
   selectedScenarioId: string | null
   compareScenarioId: string | null
   sidebarOpen: boolean
+  darkMode: boolean
 
   setPresentationMode: (mode: PresentationMode) => void
   setAccessibilityMode: (mode: AccessibilityMode) => void
@@ -28,6 +29,8 @@ interface UIState {
   selectScenario: (id: string | null) => void
   setCompareScenario: (id: string | null) => void
   setSidebarOpen: (open: boolean) => void
+  setDarkMode: (dark: boolean) => void
+  toggleDarkMode: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -43,6 +46,7 @@ export const useUIStore = create<UIState>((set) => ({
   selectedScenarioId: null,
   compareScenarioId: null,
   sidebarOpen: false,
+  darkMode: typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches,
 
   setPresentationMode: (mode) => set({ presentationMode: mode }),
   setAccessibilityMode: (mode) => set({ accessibilityMode: mode }),
@@ -59,6 +63,16 @@ export const useUIStore = create<UIState>((set) => ({
   selectScenario: (id) => set({ selectedScenarioId: id }),
   setCompareScenario: (id) => set({ compareScenarioId: id }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setDarkMode: (dark) => {
+    document.documentElement.classList.toggle('dark', dark)
+    set({ darkMode: dark })
+  },
+  toggleDarkMode: () =>
+    set((state) => {
+      const next = !state.darkMode
+      document.documentElement.classList.toggle('dark', next)
+      return { darkMode: next }
+    }),
 }))
 
 export { ZOOM_PRESETS }

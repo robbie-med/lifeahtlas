@@ -172,27 +172,27 @@ export function LongevityView({ birthDate, spouseBirthDate, spouseSex, spouseNam
       {/* Spouse metrics row */}
       {hasSpouse && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="border-pink-200">
+          <Card className="border-pink-200 dark:border-pink-800">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-pink-700">{spouseAge}</div>
+              <div className="text-2xl font-bold text-pink-700 dark:text-pink-300">{spouseAge}</div>
               {showText && <div className="text-xs text-muted-foreground">{spouseName ?? 'Spouse'} Age</div>}
             </CardContent>
           </Card>
-          <Card className="border-pink-200">
+          <Card className="border-pink-200 dark:border-pink-800">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-pink-700">{spouseLE}</div>
+              <div className="text-2xl font-bold text-pink-700 dark:text-pink-300">{spouseLE}</div>
               {showText && <div className="text-xs text-muted-foreground">{spouseName ?? 'Spouse'} Years Remaining</div>}
             </CardContent>
           </Card>
-          <Card className="border-pink-200">
+          <Card className="border-pink-200 dark:border-pink-800">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-pink-700">{Math.round(spouseAge! + spouseLE!)}</div>
+              <div className="text-2xl font-bold text-pink-700 dark:text-pink-300">{Math.round(spouseAge! + spouseLE!)}</div>
               {showText && <div className="text-xs text-muted-foreground">{spouseName ?? 'Spouse'} Expected Age</div>}
             </CardContent>
           </Card>
-          <Card className="border-pink-200">
+          <Card className="border-pink-200 dark:border-pink-800">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-pink-700">
+              <div className="text-2xl font-bold text-pink-700 dark:text-pink-300">
                 {Math.abs(Math.round((currentAge + le) - (spouseAge! + spouseLE!)))}y
               </div>
               {showText && <div className="text-xs text-muted-foreground">Expected Gap</div>}
@@ -228,17 +228,17 @@ export function LongevityView({ birthDate, spouseBirthDate, spouseSex, spouseNam
           </div>
           {spousePercentiles && (
             <div className="flex gap-3 flex-wrap mt-2">
-              <span className="text-xs text-pink-700 font-medium">{spouseName ?? 'Spouse'}:</span>
-              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700">
+              <span className="text-xs text-pink-700 dark:text-pink-300 font-medium">{spouseName ?? 'Spouse'}:</span>
+              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700 dark:border-pink-800 dark:text-pink-300">
                 25th: {spousePercentiles.p25}
               </Badge>
-              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700">
+              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700 dark:border-pink-800 dark:text-pink-300">
                 Median: {spousePercentiles.p50}
               </Badge>
-              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700">
+              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700 dark:border-pink-800 dark:text-pink-300">
                 75th: {spousePercentiles.p75}
               </Badge>
-              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700">
+              <Badge variant="outline" className="text-xs border-pink-200 text-pink-700 dark:border-pink-800 dark:text-pink-300">
                 90th: {spousePercentiles.p90}
               </Badge>
             </div>

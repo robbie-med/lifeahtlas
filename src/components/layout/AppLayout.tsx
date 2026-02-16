@@ -34,6 +34,16 @@ import { PresentationMode } from '@/types'
 import type { Sex, FamilyMember } from '@/types'
 import { useLiveAccounts, useLiveIncomeStreams, useLiveExpenseRules } from '@/hooks/useLiveData'
 
+function DarkModeToggle() {
+  const darkMode = useUIStore((s) => s.darkMode)
+  const toggleDarkMode = useUIStore((s) => s.toggleDarkMode)
+  return (
+    <Button size="sm" variant="outline" onClick={toggleDarkMode} className="h-8 w-8 p-0" title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
+      {darkMode ? '\u2600' : '\u263E'}
+    </Button>
+  )
+}
+
 export function AppLayout() {
   const persons = useLivePersons()
   const mode = useUIStore((s) => s.presentationMode)
@@ -204,6 +214,7 @@ export function AppLayout() {
         <ZoomControl />
         <ModeToggle />
         <AccessibilityToggle />
+        <DarkModeToggle />
       </header>
 
       {/* Main Content */}
