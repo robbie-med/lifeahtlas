@@ -270,8 +270,8 @@ export function LongevityView({ birthDate, spouseBirthDate, spouseSex, spouseNam
                     label={{ value: 'Survival %', angle: -90, position: 'insideLeft', fontSize: 10 }}
                   />
                   <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value}%`,
+                    formatter={(value?: number, name?: string) => [
+                      `${value ?? 0}%`,
                       name === 'survival' ? 'You' : (spouseName ?? 'Spouse'),
                     ]}
                     labelFormatter={(age) => `Age ${age}`}

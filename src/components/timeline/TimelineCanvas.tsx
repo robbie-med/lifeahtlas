@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react'
+import { useRef, useState, useMemo, useCallback } from 'react'
 import { useGesture } from '@use-gesture/react'
 import { parseISO, differenceInDays } from 'date-fns'
 import { useUIStore } from '@/stores/uiStore'
@@ -175,7 +175,7 @@ export function TimelineCanvas({
   const handleThumbPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!draggingThumb) return
-      const { minPx, totalPx } = contentExtent
+      const { totalPx } = contentExtent
       const maxScroll = totalPx - containerWidth
       if (maxScroll <= 0) return
 
@@ -327,7 +327,7 @@ export function TimelineCanvas({
               fontSize={9}
               fill="hsl(var(--muted-foreground))"
               fontWeight={600}
-              textTransform="uppercase"
+              style={{ textTransform: 'uppercase' }}
             >
               FAMILY
             </text>

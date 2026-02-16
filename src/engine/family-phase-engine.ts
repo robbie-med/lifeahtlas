@@ -9,7 +9,7 @@
 import { addYears, formatISO, differenceInYears } from 'date-fns'
 import { computeCareNeedsCurve } from '@/engine/longevity-engine'
 import { PhaseCategory, CertaintyLevel, FlexibilityLevel } from '@/types'
-import type { Sex, Relationship, FamilyMember } from '@/types'
+import type { FamilyMember } from '@/types'
 
 export interface GeneratedPhaseSpec {
   name: string
