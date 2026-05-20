@@ -1,86 +1,53 @@
-# React + TypeScript + Vite
+# LifeAhtlas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal life-planning canvas. LifeAhtlas maps life phases, family, finances,
+and longevity onto a single shared timeline so you can think through
+long-horizon decisions in one place.
 
-## Build Fixes (2026-02-16)
+Live site: <https://lifeahtlas.robbiemed.org>
 
-The following TypeScript errors were encountered during `npm run build` and fixed:
+## What it does
 
-| File | Error | Fix |
-|------|-------|-----|
-| `src/components/family/FamilyMemberList.tsx` | `TS6133`: `Badge` imported but never used | Removed unused `Badge` import |
-| `src/components/longevity/LongevityView.tsx` | `TS2322`: Recharts `Tooltip` `formatter` params typed as `number, string` but Recharts passes `number \| undefined, string \| undefined` | Changed formatter signature to `(value?: number, name?: string)` |
-| `src/components/timeline/TimelineCanvas.tsx` | `TS6133`: `useEffect` imported but never used | Removed `useEffect` from import |
-| `src/components/timeline/TimelineCanvas.tsx` | `TS6133`: `minPx` destructured but never used in `handleThumbPointerMove` | Removed `minPx` from destructuring |
-| `src/components/timeline/TimelineCanvas.tsx` | `TS2322`: `textTransform` is not a valid SVG attribute prop | Changed to `style={{ textTransform: 'uppercase' }}` |
-| `src/engine/family-phase-engine.ts` | `TS6196`: `Sex` and `Relationship` type imports never used | Removed unused type imports |
+- **Phase timeline** — lay out life chapters (school, jobs, sabbaticals,
+  retirement, care) on a zoomable timeline.
+- **Family lanes** — overlay spouse, kids, and parents with their own age and
+  phase tracks.
+- **Financial projection** — accounts, income streams, and expense rules
+  project net worth month-by-month over a 80-year horizon.
+- **Scenario compare** — duplicate a baseline plan and compare two scenarios
+  side by side.
+- **Longevity view** — actuarial-based life expectancy with optional spouse
+  overlay.
+- **Stress scoring** — highlights phases where projected cash flow gets tight.
 
-Currently, two official plugins are available:
+## Privacy
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+All data stays in your browser. LifeAhtlas uses IndexedDB (via Dexie) for
+local storage and never sends scenarios to a server. Clearing site data
+deletes your plan.
 
-## React Compiler
+## Tech
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+React 19, TypeScript, Vite 7, Tailwind 4, Zustand, Dexie, Recharts.
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev       # http://localhost:3000
+npm run build     # type-check + production bundle
+npm test          # vitest
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Requires Node 20.19+ or 22.12+ (Vite 7).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Deployment
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+`main` is built and deployed to GitHub Pages by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The
+[`public/CNAME`](public/CNAME) file pins the custom domain
+`lifeahtlas.robbiemed.org`.
+
+## License
+
+[MIT](LICENSE) &copy; 2026 Robbie
